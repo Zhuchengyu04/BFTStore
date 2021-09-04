@@ -2,9 +2,7 @@
 
 BFT-Store is a Byzantine fault-tolerant storage engine via EC for permissioned blockchain system, which reduces the storage complexity per block from O(n) to O(1) and improves the overall storage capability.
 
-BFT-Store's library is able to use in two ways:
-
-- compile as a static library.
+BFT-Store's library is able to use as a static library.
 
 
 
