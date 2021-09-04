@@ -27,9 +27,9 @@ void Erasure::generate_ptrs(size_t data_size, uint8_t* data, erasure_bool* prese
 
 std::string Erasure::GetChunkDataKey(unsigned int coding_epoch, unsigned chunk_pos)
 {
-    return std::to_string(coding_epoch).append(std::to_string(chunk_pos));
+    return DecIntToHexStr(coding_epoch).append("+").DecIntToHexStr(chunk_pos);
+
 }
-// 
 int64_t maxLen(vector<bytes> const& blocks, int64_t data_len)
 {
     int64_t max = blocks[0].size();
@@ -45,12 +45,7 @@ int64_t maxLen(vector<bytes> const& blocks, int64_t data_len)
 
 std::pair<byte*, int64_t> Erasure::preprocess(vector<bytes> const& blocks)
 {
-    // vector<vector<byte>> block_data;
-    // for (int i = 0; i < ec_k; i++)  // parallelize
-    // {
-    //     auto blockRlp = blocks[i]->rlp();
-    //     block_data.push_back(blockRlp);
-    // }
+    
     int64_t max_len = maxLen(blocks, ec_k);
     byte* blocks_rlp_data = new byte[(BLOCKS_SIZE_BYTE + max_len) * (ec_k + ec_m)];
     memset(blocks_rlp_data, 0, sizeof(byte) * (BLOCKS_SIZE_BYTE + max_len) * (ec_k + ec_m));
@@ -99,7 +94,7 @@ std::pair<byte**, int64_t> Erasure::encode(std::pair<byte*, int64_t> blocks_rlp_
 }
 
 
-int64_t Erasure::findSeqInSealers()
+int64_t Erasure::findSequenceInSealers()
 {
     for (int i = 0; i < ec_sealers.size(); i++)
     {
@@ -111,9 +106,9 @@ int64_t Erasure::findSeqInSealers()
     return -1;
 }
 
-bool Erasure::InitErasure()
+bool Erasure::initErasure()
 {
-    ec_position_in_sealers = findSeqInSealers();
+    ec_position_in_sealers = findSequenceInSealers();
     Options options;
     options.create_if_missing = true;
     Status status = DB::Open(options, ec_DBPath, &ec_db);
@@ -137,12 +132,8 @@ string DecIntToHexStr(unsigned int num)
 bool Erasure::writeDB(
     unsigned int coding_epoch, std::pair<unsigned int, byte*> chunk, int64_t chunk_size, bool flag)
 {
-    //写入文件格式：
-    // key = coding_epoch||chunk_pos, 其中chunk_pos固定位数为节点个数的十六进制表示位数
-    // value = chunk_data||digest, 其中digest固定位数为64字节
-    string key = DecIntToHexStr(coding_epoch);
-    string key2 = DecIntToHexStr(chunk.first);
-    key.append("+").append(key2);
+
+    string key = GetChunkDataKey(coding_epoch,chunk.first);
     string value(chunk.second, chunk.second + chunk_size);
     string digest =
         sha256(vector_ref<const byte>(
@@ -177,7 +168,7 @@ void Erasure::saveChunk(std::vector<bytes> const& blocks, int last_block_number)
     // Point Latest Coding Group
 
     unsigned int coding_epoch = (last_block_number - 1) / ec_k;
-    int* chunk_set = get_distinct_chunk_set(coding_epoch);
+    int* chunk_set = getDistinctChunkSet(coding_epoch);
    
     std::pair<byte**, int64_t> chunks = encode(preprocess(blocks));
 
@@ -199,7 +190,7 @@ void Erasure::saveChunk(std::vector<bytes> const& blocks, int last_block_number)
 }
 
 // i-th block stored by chunk_set[i]-th node
-int* Erasure::get_distinct_chunk_set(unsigned int coding_epoch)
+int* Erasure::getDistinctChunkSet(unsigned int coding_epoch)
 {
     std::hash<unsigned int> ec_hash;
     unsigned int seed = ec_hash(coding_epoch);
@@ -284,7 +275,7 @@ NodeAddr_Type Erasure::remoteReadBlock(unsigned int block_num)
     unsigned int chunk_pos = (block_num - 1) % ec_k;
 
 
-    int* chunk_set = get_distinct_chunk_set(coding_epoch);
+    int* chunk_set = getDistinctChunkSet(coding_epoch);
     int target_idx = chunk_set[chunk_pos];
     delete chunk_set;
     NodeAddr_Type target_nodeid = ec_sealers[target_idx];
@@ -295,7 +286,7 @@ NodeAddr_Type Erasure::computeBlocksInWhichNode(int block_number)
 {
     unsigned int coding_epoch = (block_number - 1) / ec_k;
     unsigned int chunk_pos = (block_number - 1) % ec_k;
-    int* chunk_set = get_distinct_chunk_set(coding_epoch);
+    int* chunk_set = getDistinctChunkSet(coding_epoch);
     int target_idx = chunk_set[chunk_pos];
     delete chunk_set;
     NodeAddr_Type target_nodeid = ec_sealers[target_idx];
@@ -308,16 +299,7 @@ bytes Erasure::decode(
     unsigned int coding_epoch = (target_block_num - 1) / ec_k;
     unsigned int chunk_pos = (target_block_num - 1) % ec_k;
 
-    // test digest
-    // for (int i = 0; i < index.size(); ++i)
-    // {
-    //     string digest = sha256(ref(input_data[i])).hex();
-    //     string db_digest = readChunk(coding_epoch, index[i]);
-
-    //     std::cout << "db_digest = " << db_digest.substr(db_digest.length()-64) << std::endl;
-    //     std::cout << "(" << coding_epoch << " " << index[i] << ");   recieve digest = " << digest
-    //               << std::endl;
-    // }
+    
 
 
     erasure_bool* present = new erasure_bool[ec_k + ec_m];
@@ -349,17 +331,13 @@ bytes Erasure::decode(
     delete present;
     std::cout << "finish decode " << std::endl;
     bytes res(ptrs[chunk_pos], ptrs[chunk_pos] + input_data[0].size());
-    string digest = sha256(ref(res)).hex();
-    std::cout << "decode digest = " << digest << std::endl;
-    // return bytes(ptrs[chunk_pos], ptrs[chunk_pos] + input_data[0].size());
+    return res;
 }
 
 std::string Erasure::readChunk(unsigned int coding_epoch, unsigned int chunk_pos)
 {
     std::string get_value;
-    string key = DecIntToHexStr(coding_epoch);
-    string key2 = DecIntToHexStr(chunk_pos);
-    key.append("+").append(key2);
+    string key = GetChunkDataKey(coding_epoch,chunk.first);
     Status status = ec_db->Get(ReadOptions(), key, &get_value);
     assert(status.ok());
     return get_value;
@@ -374,7 +352,7 @@ pair<int, int> Erasure::computeChunkPosition(int block_number)
 
 vector<int> Erasure::getChunkPosByNodeIdAndEpoch(int epoch)
 {
-    int* chunk_set = get_distinct_chunk_set(epoch);
+    int* chunk_set = getDistinctChunkSet(epoch);
     vector<int> node_index_to_chunk_pos(ec_k + ec_m);
     for (int i = 0; i < ec_k + ec_m; ++i)
     {

@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "algorithm": "cpp",
+        "random": "cpp",
+        "cstddef": "cpp",
+        "xstring": "cpp",
+        "utility": "cpp",
+        "string": "cpp"
+    }
+}

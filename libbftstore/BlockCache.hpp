@@ -1,6 +1,7 @@
+
+#pragma once
 #include "Common.h"
 #include <utility>
-#include <unordered_map>
 namespace ec
 {
 struct DLinkedNode
