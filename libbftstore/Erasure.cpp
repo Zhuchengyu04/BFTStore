@@ -1,5 +1,4 @@
 #include "Erasure.h"
-#include <libdevcrypto/Hash.h>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -8,10 +7,8 @@
 using namespace ec;
 using namespace std;
 using namespace rocksdb;
-using namespace dev;
 
-// #define Block_Type dev::eth::Block
-// #define NodeAddr_Type dev::512
+#define NodeAddr_Type ec::512
 
 
 void Erasure::generate_ptrs(size_t data_size, uint8_t* data, erasure_bool* present, uint8_t** ptrs)
@@ -27,10 +24,12 @@ void Erasure::generate_ptrs(size_t data_size, uint8_t* data, erasure_bool* prese
         present[i] = true;
     }
 }
+
 std::string Erasure::GetChunkDataKey(unsigned int coding_epoch, unsigned chunk_pos)
 {
     return std::to_string(coding_epoch).append(std::to_string(chunk_pos));
 }
+// 
 int64_t maxLen(vector<bytes> const& blocks, int64_t data_len)
 {
     int64_t max = blocks[0].size();
@@ -173,7 +172,6 @@ bool Erasure::writeDB(
     }
 }
 
-
 void Erasure::saveChunk(std::vector<bytes> const& blocks, int last_block_number)
 {
     // Point Latest Coding Group
@@ -199,8 +197,8 @@ void Erasure::saveChunk(std::vector<bytes> const& blocks, int last_block_number)
     // parallel erasure code
     complete_coding_epoch = coding_epoch;
 }
-// i-th block stored by chunk_set[i]-th node
 
+// i-th block stored by chunk_set[i]-th node
 int* Erasure::get_distinct_chunk_set(unsigned int coding_epoch)
 {
     std::hash<unsigned int> ec_hash;
@@ -292,6 +290,7 @@ NodeAddr_Type Erasure::remoteReadBlock(unsigned int block_num)
     NodeAddr_Type target_nodeid = ec_sealers[target_idx];
     return target_nodeid;
 }
+
 NodeAddr_Type Erasure::computeBlocksInWhichNode(int block_number)
 {
     unsigned int coding_epoch = (block_number - 1) / ec_k;
@@ -302,6 +301,7 @@ NodeAddr_Type Erasure::computeBlocksInWhichNode(int block_number)
     NodeAddr_Type target_nodeid = ec_sealers[target_idx];
     return target_nodeid;
 }
+
 bytes Erasure::decode(
     std::vector<bytes> const& input_data, std::vector<int> const& index, int target_block_num)
 {
@@ -364,12 +364,14 @@ std::string Erasure::readChunk(unsigned int coding_epoch, unsigned int chunk_pos
     assert(status.ok());
     return get_value;
 }
+
 pair<int, int> Erasure::computeChunkPosition(int block_number)
 {
     unsigned int coding_epoch = (block_number - 1) / ec_k;
     unsigned int chunk_pos = (block_number - 1) % ec_k;
     return make_pair(coding_epoch, chunk_pos);
 }
+
 vector<int> Erasure::getChunkPosByNodeIdAndEpoch(int epoch)
 {
     int* chunk_set = get_distinct_chunk_set(epoch);
@@ -380,6 +382,7 @@ vector<int> Erasure::getChunkPosByNodeIdAndEpoch(int epoch)
     }
     return node_index_to_chunk_pos;
 }
+
 bytes Erasure::unpackChunkToBlock(bytes const& data)
 {
     int64_t block_size = (unsigned int)(data[0] & 0xff) * 255 * 255 +

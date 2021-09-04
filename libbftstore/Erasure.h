@@ -1,31 +1,32 @@
 #pragma once
 #include "erasure-codes/liberasure.h"
-#include <libdevcore/FixedHash.h>
 #include "rocksdb/db.h"
 #include "rocksdb/options.h"
 #include "rocksdb/slice.h"
 
-#include "Common.h"
 #include "BlockCache.hpp"
-#include <tbb/concurrent_queue.h>
+#include "Common.h"
+#include "Hash.h"
+#include <sys/time.h>
 #include <algorithm>
-#include <atomic>
-#include <mutex>
-#include <set>
-#include <unordered_map>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <random>
+#include <string>
 
+using namespace rocksdb;
 
 #define BLOCKS_SIZE_BYTE 3  //默认记录区块大小的字节数
-#define NodeAddr_Type dev::h512
+#define NodeAddr_Type ec::h512
 
 namespace ec
 {
-// template <class NodeAddr_Type>
 class Erasure : public std::enable_shared_from_this<Erasure>
 {
 public:
-    Erasure(int64_t _k, int64_t _m, NodeAddr_Type& _nodeid,
-        std::vector<NodeAddr_Type> _sealers, std::string _path, int _cache_capacity)
+    Erasure(int64_t _k, int64_t _m, NodeAddr_Type& _nodeid, std::vector<NodeAddr_Type> _sealers,
+        std::string _path, int _cache_capacity)
       : ec_k(_k),
         ec_m(_m),
         ec_nodeid(_nodeid),
@@ -39,7 +40,8 @@ public:
     //编解码模块
     std::pair<byte*, int64_t> preprocess(std::vector<bytes> const& blocks);
     std::pair<byte**, int64_t> encode(std::pair<byte*, int64_t> blocks_rlp_data);
-    bytes decode(std::vector<bytes> const& data, std::vector<int> const& index,int target_block_num);
+    bytes decode(
+        std::vector<bytes> const& data, std::vector<int> const& index, int target_block_num);
 
 
     bool checkChunk();
@@ -64,7 +66,7 @@ public:
     int* get_distinct_chunk_set(unsigned int coding_epoch);
 
     NodeAddr_Type computeBlocksInWhichNode(int block_number);
-    std::pair<int,int> computeChunkPosition(int block_number);
+    std::pair<int, int> computeChunkPosition(int block_number);
     int64_t findSeqInSealers();
     int64_t getK() { return ec_k; }
     int64_t getM() { return ec_m; }
@@ -85,4 +87,5 @@ private:
     int cache_capacity = 10;
     int64_t complete_coding_epoch = -1;  //已完成ECepoch
 };
+
 }  // namespace ec
