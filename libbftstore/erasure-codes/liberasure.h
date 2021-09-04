@@ -31,14 +31,7 @@
 #define ERASURE_ARCH_X86_64
 #elif defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
 #define ERASURE_ARCH_IA64
-#elif defined(__ppc__) || defined(__ppc) || defined(__powerpc__) \\
-      || defined(_ARCH_COM) || defined(_ARCH_PWR) || defined(_ARCH_PPC)  \\
-      || defined(_M_MPPC) || defined(_M_PPC)
-#if defined(__ppc64__) || defined(__powerpc64__) || defined(__64BIT__)
-#define ERASURE_ARCH_PPC64
-#else
-#define ERASURE_ARCH_PPC
-#endif
+
 #else
 #define ERASURE_ARCH_UNKNOWN
 #endif

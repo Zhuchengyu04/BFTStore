@@ -44,8 +44,8 @@ set(BOOST_BUILD_FILES ${BOOST_LIB_PREFIX}chrono.a ${BOOST_LIB_PREFIX}date_time.a
 ExternalProject_Add(boost
     PREFIX ${CMAKE_SOURCE_DIR}/deps
     DOWNLOAD_NO_PROGRESS 1
-     URL http://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.bz2
-    #URL https://nchc.dl.sourceforge.net/project/boost/boost/1.68.0/boost_1_68_0.tar.bz2
+     #URL http://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.bz2
+    URL https://nchc.dl.sourceforge.net/project/boost/boost/1.68.0/boost_1_68_0.tar.bz2
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ${BOOST_BOOTSTRAP_COMMAND}
     LOG_CONFIGURE 1
