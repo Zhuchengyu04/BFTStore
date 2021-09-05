@@ -17,4 +17,4 @@ BFT-Store's library is able to use as a static library.
 
 The public interface is in `include/`. Callers should not include or rely on the details of any other header files in this package. Those internal APIs may be changed without warning.
 
-Start with example in `example/example.cpp`
+Start with example in `example.cpp`

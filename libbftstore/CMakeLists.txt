@@ -30,4 +30,4 @@ add_compile_options(-Wno-return-type)
 
 add_library(bftstore ${SRC_LIST} ${HEADERS})
 target_include_directories(bftstore SYSTEM BEFORE PUBLIC include ${BOOST_INCLUDE_DIR})
-target_link_libraries(bftstore PUBLIC erasure TBB RocksDB Secp256k1 Boost::Filesystem)
+target_link_libraries(bftstore PUBLIC erasure TBB RocksDB Secp256k1 Boost::Filesystem pthread)
