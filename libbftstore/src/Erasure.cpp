@@ -9,8 +9,19 @@ using namespace ec;
 using namespace std;
 using namespace rocksdb;
 
-#define NodeAddr_Type ec::512
-
+#define NodeAddr_Type ec::h512
+inline std::string DecIntToHexStr(unsigned int num) {
+    std::string str;
+    unsigned int Temp = num / 16;
+    int left = num % 16;
+    if (Temp > 0)
+        str += DecIntToHexStr(Temp);
+    if (left < 10)
+        str += (left + '0');
+    else
+        str += ('A' + left - 10);
+    return str;
+}
 void Erasure::generate_ptrs(size_t data_size, uint8_t* data, erasure_bool* present, uint8_t** ptrs) {
     size_t i;
     for (i = 0; i < ec_k + ec_m; ++i) {
@@ -23,7 +34,7 @@ void Erasure::generate_ptrs(size_t data_size, uint8_t* data, erasure_bool* prese
 }
 
 std::string Erasure::GetChunkDataKey(unsigned int coding_epoch, unsigned chunk_pos) {
-    return DecIntToHexStr(coding_epoch).append("+").DecIntToHexStr(chunk_pos);
+    return DecIntToHexStr(coding_epoch).append("+").append(DecIntToHexStr(chunk_pos));
 }
 int64_t maxLen(vector<bytes> const& blocks, int64_t data_len) {
     int64_t max = blocks[0].size();
@@ -95,18 +106,7 @@ bool Erasure::initErasure() {
     assert(status.ok());
     ec_cache = std::make_shared<ec::LRUCache>(cache_capacity);
 }
-string DecIntToHexStr(unsigned int num) {
-    string str;
-    unsigned int Temp = num / 16;
-    int left = num % 16;
-    if (Temp > 0)
-        str += DecIntToHexStr(Temp);
-    if (left < 10)
-        str += (left + '0');
-    else
-        str += ('A' + left - 10);
-    return str;
-}
+
 
 bool Erasure::writeDB(
     unsigned int coding_epoch, std::pair<unsigned int, byte*> chunk, int64_t chunk_size, bool flag) {
@@ -276,7 +276,7 @@ bytes Erasure::decode(
 
 std::string Erasure::readChunk(unsigned int coding_epoch, unsigned int chunk_pos) {
     std::string get_value;
-    string key = GetChunkDataKey(coding_epoch, chunk.first);
+    string key = GetChunkDataKey(coding_epoch, chunk_pos);
     Status status = ec_db->Get(ReadOptions(), key, &get_value);
     assert(status.ok());
     return get_value;

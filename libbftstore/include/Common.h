@@ -12,7 +12,7 @@ using byte = uint8_t;
 using bytes = std::vector<byte>;
 using bytesRef = vector_ref<byte>;
 using bytesConstRef = vector_ref<byte const>;
-using int64_t = long long;
+// using int64_t = long long;
 using string32 = std::array<char, 32>;
 using bytesSec = secure_vector<byte>;
 

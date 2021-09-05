@@ -11,7 +11,7 @@
 #include "BlockCache.hpp"
 #include "Common.h"
 #include "Hash.h"
-#include "erasure-codes/liberasure.h"
+#include "../erasure-codes/liberasure.h"
 #include "rocksdb/db.h"
 #include "rocksdb/options.h"
 #include "rocksdb/slice.h"
