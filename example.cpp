@@ -87,4 +87,7 @@ int main() {
     ec::bytes decode_target_data =
         m_erasure->decode(receive_data, index, read_block_number);
     ec::bytes block_data = erasure->unpackChunkToBlock(decode_target_data);
+    
+    
+    return 0;
 }
